@@ -1,0 +1,5 @@
+#!/bin/bash
+# Saving iptable rules
+iptables-save > /etc/iptables/iptables.rules
+systemctl enable iptables && echo "iptables.service enabled"
+systemctl start iptables && echo "iptables.service loaded"
