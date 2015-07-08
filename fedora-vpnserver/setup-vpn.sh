@@ -13,6 +13,7 @@ txtrst='\e[0m'    # Text Reset
 
 # Variables
 logdir='./log.txt'
+installpath='/root/easy-rsa'
 
 success() {
     echo -e "$txtgrn""Success performing operation: $1""$txtrst"
@@ -26,7 +27,18 @@ failure() {
 
 install() {
     dnf install openvpn easy-rsa 2>> log.txt
-    cp -ai /usr/share/easy-rsa/2.0 /root/easy-rsa 2>> log.txt
+    cp -ai /usr/share/easy-rsa/2.0 $installpath 2>> log.txt
+}
+
+setup() {
+    vi $installpath/vars
+    source $installpath/vars
+    sh $installpath/clean-all
+    sh $installpath/build-ca
+    sh $installpath/build-key-server $( hostname | cut -d. -f1 )
+    sh $installpath/build-dh
+    mkdir /etc/openvpn/keys
+    cp -ai $installpath/keys/$( hostname | cut -d. -f1 ).{crt,key} keys/ca.crt keys/dh*.pem /etc/openvpn/keys/
 }
 
 echo -e "$txtblu""Installing required software""$txtrst"
