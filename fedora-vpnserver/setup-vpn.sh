@@ -39,7 +39,24 @@ setup() {
     sh $installpath/build-dh
     mkdir /etc/openvpn/keys
     cp -ai $installpath/keys/$( hostname | cut -d. -f1 ).{crt,key} keys/ca.crt keys/dh*.pem /etc/openvpn/keys/
+    #TODO Get my server.conf here
+    restorecon -Rv /etc/openvpn
+}
+
+configure() {
+    ln -s /lib/systemd/system/openvpn\@.service /etc/systemd/system/multi-user.target.wants/openvpn\@server.service
+    systemctl -f enable openvpn@server.service
+    systemctl start openvpn@server.service
+    dnf install firewalld
+    systemctl enable firewalld
+    systemctl start firewalld
+    firewall-cmd --add-service=openvpn
+    firewall-cmd --direct --passthrough ipv4 -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
+    firewall-cmd --permanent --add-port=443/tcp
+    firewall-cmd --permanent --add-masquerade
 }
 
 echo -e "$txtblu""Installing required software""$txtrst"
 install && success "Installing" || failure "Installing"
+echo -e "$txtblu""Setting up OpenVPN""$txtrst"
+setup && success "Setting up" || failure "Setting up"
